@@ -1,0 +1,32 @@
+{
+  "name": "ntx",
+  "version": "0.0.1",
+  "description": "tiny task sysytem for node.",
+  "main": "out/index.js",
+  "scripts": {
+    "prepublish": "node tasks.js prepublish",
+    "test": "node tasks.js test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wiinuk/ntx.git"
+  },
+  "keywords": [
+    "task"
+  ],
+  "author": "wiinuk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wiinuk/ntx/issues"
+  },
+  "homepage": "https://github.com/wiinuk/ntx#readme",
+  "devDependencies": {
+    "@types/node": "^8.0.53",
+    "@types/os-locale": "^2.1.0",
+    "typescript": "^2.6.2"
+  },
+  "dependencies": {
+    "os-locale": "^2.1.0",
+    "tslib": "^1.8.0"
+  }
+}
