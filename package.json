@@ -1,6 +1,6 @@
 {
   "name": "ntx",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "tiny task sysytem for node.",
   "main": "out/index.js",
   "scripts": {
