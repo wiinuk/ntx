@@ -8,9 +8,9 @@ start(async () => {
 
     const compile = r`tsc --project . --locale ${locale}`
     const test = compile
-    const prepublish = test
+    const prepublishOnly = test
     return {
-        prepublish,
+        prepublishOnly,
         test,
         watch: r`tsc --watch --project . --locale ${locale}`
     }

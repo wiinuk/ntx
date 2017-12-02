@@ -1,10 +1,10 @@
 {
   "name": "ntx",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "tiny task sysytem for node.",
   "main": "out/index.js",
   "scripts": {
-    "prepublish": "node tasks.js prepublish",
+    "prepublishOnly": "node tasks.js prepublishOnly",
     "test": "node tasks.js test"
   },
   "repository": {
