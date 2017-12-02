@@ -36,7 +36,7 @@ const execAsync = async (command: string) => {
     return p
 }
 
-class ProcessExitCodeError extends Error {
+export class ProcessExitCodeError extends Error {
     constructor(readonly code: number, readonly signal: string) {
         super(`Process exited with non-zero code. code: ${code}, signal: ${signal}`)
     }
