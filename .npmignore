@@ -1,4 +1,4 @@
 src
 .vscode
 tsconfig.json
-tasks.json
+tasks.js
