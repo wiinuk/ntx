@@ -1,8 +1,9 @@
 {
   "name": "ntx",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "tiny task sysytem for node.",
   "main": "out/index.js",
+  "types": "out/index.d.ts",
   "scripts": {
     "prepublishOnly": "node tasks.js prepublishOnly",
     "test": "node tasks.js test"
