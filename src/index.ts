@@ -131,14 +131,20 @@ const overrideEnvAsync = async <T>(key: string, value: string, action: () => T) 
     return result
 }
 
-export const r = (strings: TemplateStringsArray, ...values: string[]) => toTask(async e => {
-    const result = [strings[0]];
-    for (let i = 0, l = values.length; i < l; i++) {
-        result.push(values[i])
-        result.push(strings[i + 1])
+export const r = (strings: TemplateStringsArray, ...stringsOrTasksOrPromises: (string | Task<string> | Promise<string>)[]) => toTask(async e => {
+    const xs = [strings[0]];
+    for (let i = 0, l = stringsOrTasksOrPromises.length; i < l; i++) {
+        const v = stringsOrTasksOrPromises[i]
+        const s =
+            (typeof v === "string") ? v :
+            (v instanceof Promise) ? await v :
+            await v.run(e)
+            
+        xs.push(s)
+        xs.push(strings[i + 1])
     }
     const name = e.name
-    const command = result.join("")
+    const command = xs.join("")
     console.log(`${name}> ${command}`)
     return overrideEnvAsync("path", process.env.path + ";" + await npmBinPath, () =>
         spawnAsync(command, [],
@@ -157,8 +163,9 @@ export const r = (strings: TemplateStringsArray, ...values: string[]) => toTask(
 type Tasks<T> = {[P in keyof T]: Task<void> } & object
 
 
-const startAsync = async <T extends Tasks<T>>(makeTasks: () => Promise<T>) => {
-    const tasks = await makeTasks()
+const startAsync = async <T extends Tasks<T>>(tasksOrFunction: T | (() => Promise<T>)) => {
+    const tasks = (typeof tasksOrFunction === "function") ? await tasksOrFunction() : tasksOrFunction
+
     const taskName = process.argv[2]
 
     const taskNames = Object.keys(tasks)
@@ -176,7 +183,7 @@ const startAsync = async <T extends Tasks<T>>(makeTasks: () => Promise<T>) => {
 }
 const handleError = (p: Promise<void>) => { p.catch(e => console.error(e)) }
 
-export const start = <T extends Tasks<T>>(makeTasks: () => Promise<T>) => handleError(startAsync(makeTasks))
+export const start = <T extends Tasks<T>>(tasksOrFunction: T | (() => Promise<T>)) => handleError(startAsync(tasksOrFunction))
 
 //#endregion
 
