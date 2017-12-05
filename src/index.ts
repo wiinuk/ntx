@@ -1,7 +1,6 @@
 import * as childProcess from "child_process"
 import * as path from "path"
-import * as osLocale from "os-locale"
-import * as fs from "fs"
+import * as chokidar from "chokidar"
 
 
 export interface TaskEnvironment {
@@ -20,12 +19,6 @@ export interface Task<T> {
 }
 
 //#region utils
-
-const changeExtension = (fileName: string, newExtension: string) => {
-    const { dir, name } = path.parse(fileName)
-    const e = (newExtension.indexOf(".") !== 0) ? ("." + newExtension) : newExtension
-    return path.join(dir, name + e)
-}
 
 const execAsync = async (command: string) => {
     const p = new Promise<{ stdout: string, stderr: string }>((resolve, reject) => {
@@ -89,13 +82,18 @@ class TaskImpl<T> implements Task<T> {
         })
     }
 
-    watch(this: Task<void>, fileName: string): Task<never> {
-        return new TaskImpl(this.name, env => new Promise<never>((_, reject) => {
+    watch(this: Task<void>, glob: string | string[]): Task<never> {
+        return new TaskImpl(this.name, env => new Promise<never>((_resolve, reject) => {
             let last = Promise.resolve()
-            const w = fs.watch(fileName, { recursive: true }, () =>
-                last = last.then(() => this.run(env))
-            )
-            w.once("error", reject)
+            const w = chokidar.watch(glob, { persistent: true })
+            w.once("error", e => {
+                w.removeAllListeners()
+                w.close()
+                reject(e)
+            })
+            w.on("all", (_event, _path) => {
+                last = last.then(() => this.run(env)).catch(reject)
+            })
         }))
     }
 
@@ -105,11 +103,8 @@ class TaskImpl<T> implements Task<T> {
         handleError(this.run({ name }))
     }
 }
-export function all(tasks: Task<void>[]): Task<void>
-export function all<T1, T2>(tasks: [Task<T1>, Task<T2>]): Task<[T1, T2]>
-export function all<T1, T2, T3>(tasks: [Task<T1>, Task<T2>, Task<T3>]): Task<[T1, T2, T3]>
-export function all<T1, T2, T3, T4>(tasks: [Task<T1>, Task<T2>, Task<T3>, Task<T4>]): Task<[T1, T2, T3, T4]>
-export function all(tasks: Task<any>[]): Task<any> {
+
+const allArray = <T>(tasks: Task<T>[]): Task<T[]> => {
     const name1 = tasks[0].name
     return new TaskImpl(name1 === void 0 ? null : name1, env => {
         let es = tasks.map(t => combineName(env, t.name))
@@ -118,6 +113,30 @@ export function all(tasks: Task<any>[]): Task<any> {
         }
         return Promise.all(tasks.map((t, i) => t.run(es[i])))
     })
+}
+
+export { all }
+
+function all(tasks: Task<void>[]): Task<void>
+function all<T1, T2>(tasks: [Task<T1>, Task<T2>]): Task<[T1, T2]>
+function all<T1, T2, T3>(tasks: [Task<T1>, Task<T2>, Task<T3>]): Task<[T1, T2, T3]>
+function all<T1, T2, T3, T4>(tasks: [Task<T1>, Task<T2>, Task<T3>, Task<T4>]): Task<[T1, T2, T3, T4]>
+function all<T>(tasks: Task<T>[]): Task<T[]>
+
+function all(...tasks: Task<void>[]): Task<void>
+function all<T1, T2>(task1: Task<T1>, task2: Task<T2>): Task<[T1, T2]>
+function all<T1, T2, T3>(task1: Task<T1>, task2: Task<T2>, task3: Task<T3>): Task<[T1, T2, T3]>
+function all<T1, T2, T3, T4>(task1: Task<T1>, task2: Task<T2>, task3: Task<T3>, task4: Task<T4>): Task<[T1, T2, T3, T4]>
+function all<T>(...tasks: Task<T>[]): Task<T[]>
+
+function all<T>(taskArrayOrTask1: Task<T>[] | Task<T>, ...tasksTail: Task<T>[]): Task<any> {
+    if (Array.isArray(taskArrayOrTask1)) {
+        return allArray(taskArrayOrTask1)
+    }
+    else {
+        tasksTail.unshift(taskArrayOrTask1)
+        return allArray(tasksTail)
+    }
 }
 
 const toTask = <T>(run: (env: TaskEnvironment) => Promise<T>): Task<T> => new TaskImpl(null, run)
@@ -184,14 +203,5 @@ const startAsync = async <T extends Tasks<T>>(tasksOrFunction: T | (() => Promis
 const handleError = (p: Promise<void>) => { p.catch(e => console.error(e)) }
 
 export const start = <T extends Tasks<T>>(tasksOrFunction: T | (() => Promise<T>)) => handleError(startAsync(tasksOrFunction))
-
-//#endregion
-
-//#region self building
-
-export const _build = () => toTask(async () => overrideEnvAsync("LANG", "", osLocale))
-    .let(locale => r`tsc ${changeExtension(__filename, ".ts")} --declaration --lib ES6 --target ES6 --module commonjs --locale ${locale}`)
-    .withName("buildSelf")
-    .start()
 
 //#endregion
