@@ -1,7 +1,7 @@
 {
   "name": "ntx",
-  "version": "0.0.8",
-  "description": "tiny task sysytem for node.",
+  "version": "0.0.10",
+  "description": "tiny task system for node.",
   "main": "out/index.js",
   "types": "out/index.d.ts",
   "scripts": {

@@ -7,6 +7,7 @@
 ## usage
 
 ```js
+// tasks.js
 const { start, r } = require("ntx")
 start({
     test: r`mocha ./out/**/*.js`
