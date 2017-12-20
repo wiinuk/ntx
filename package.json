@@ -1,10 +1,11 @@
 {
   "name": "ntx",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "tiny task system for node.",
-  "main": "out/index.js",
-  "types": "out/index.d.ts",
+  "main": "out/src/index.js",
+  "types": "out/src/index.d.ts",
   "scripts": {
+    "bootstrap": "tsc -p .",
     "prepublishOnly": "node tasks.js prepublishOnly",
     "test": "node tasks.js test"
   },
@@ -22,15 +23,19 @@
   },
   "homepage": "https://github.com/wiinuk/ntx#readme",
   "devDependencies": {
-    "@types/chokidar": "^1.7.3",
-    "@types/node": "^8.0.53",
+    "@types/chai": "^4.0.10",
+    "@types/chokidar": "^1.7.4",
+    "@types/mocha": "^2.2.44",
+    "@types/node": "^8.5.1",
     "@types/os-locale": "^2.1.0",
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1",
     "os-locale": "^2.1.0",
     "rimraf": "^2.6.2",
     "typescript": "^2.6.2"
   },
   "dependencies": {
     "chokidar": "^1.7.0",
-    "tslib": "^1.8.0"
+    "tslib": "^1.8.1"
   }
 }

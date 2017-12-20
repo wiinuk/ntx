@@ -1,4 +1,5 @@
-src
-.vscode
-tsconfig.json
+.vscode/
+out/test/
+src/
 tasks.js
+tsconfig.json

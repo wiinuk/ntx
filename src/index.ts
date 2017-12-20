@@ -1,6 +1,7 @@
 import * as childProcess from "child_process"
 import * as path from "path"
 import * as chokidar from "chokidar"
+import { promisify } from "util"
 
 
 export interface TaskEnvironment {
@@ -20,14 +21,7 @@ export interface Task<T> {
 
 //#region utils
 
-const execAsync = async (command: string) => {
-    const p = new Promise<{ stdout: string, stderr: string }>((resolve, reject) => {
-        childProcess.exec(command, (error, stdout, stderr) =>
-            (error != null) ? reject(error) : resolve({ stdout, stderr })
-        )
-    })
-    return p
-}
+const execAsync = promisify(childProcess.exec)
 
 export class ProcessExitCodeError extends Error {
     constructor(readonly code: number, readonly signal: string) {
@@ -60,6 +54,25 @@ const npmBinPath = execAsync("npm bin").then(r => r.stdout.trim())
 const combineName = (env: TaskEnvironment, name: string | null) =>
     name ? { ...env, name: `${env.name}.${name}` } : env
 
+/** @internal */
+export const _makeOnChange = <T>(f: (xs: ReadonlyArray<T>) => Promise<void>) => {
+    const queue: T[] = []
+    let running = false
+    async function receive() {
+        running = true
+        while (queue.length !== 0) {
+            const xs = queue.slice()
+            queue.length = 0
+            await f(xs)
+        }
+        running = false
+    }
+    return (x: T, reject: (reason?: any) => void) => {
+        queue.push(x)
+        if (running === false) { receive().catch(reject) }
+    }
+}
+
 class TaskImpl<T> implements Task<T> {
     constructor(
         readonly name: string | null,
@@ -84,15 +97,15 @@ class TaskImpl<T> implements Task<T> {
 
     watch(this: Task<void>, glob: string | string[]): Task<never> {
         return new TaskImpl(this.name, env => new Promise<never>((_resolve, reject) => {
-            let last = Promise.resolve()
+            const onchange = _makeOnChange(() => this.run(env))
             const w = chokidar.watch(glob, { persistent: true })
             w.once("error", e => {
                 w.removeAllListeners()
                 w.close()
                 reject(e)
             })
-            w.on("all", (_event, _path) => {
-                last = last.then(() => this.run(env)).catch(reject)
+            w.on("all", (event, path) => {
+                onchange({ event, path }, reject)
             })
         }))
     }
