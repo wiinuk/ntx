@@ -117,6 +117,9 @@ class TaskImpl<T> implements Task<T> {
     }
 }
 
+const setTimeoutAsync = promisify(setTimeout)
+export const sleep = (ms: number) => wrap(() => setTimeoutAsync(ms))
+
 const allArray = <T>(tasks: Task<T>[]): Task<T[]> => {
     const name1 = tasks[0].name
     return new TaskImpl(name1 === void 0 ? null : name1, env => {
