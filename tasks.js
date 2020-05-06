@@ -8,7 +8,7 @@ const locale = osLocale()
 const clean = r`rimraf ./out`
 const watch = r`tsc --watch --project . --locale ${locale}`
 const compile = r`tsc --project . --locale ${locale}`
-const test = compile.then(r`mocha out/**/*.js -u tdd --no-timeouts --colors`)
+const test = compile.then(r`mocha out/**/*.js`)
 const prepublishOnly = clean.then(test)
 
 start({
